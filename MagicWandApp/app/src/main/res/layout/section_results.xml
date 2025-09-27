@@ -62,20 +62,42 @@
         tools:text="A thief who steals corporate secrets through dream-sharing technology is tasked with planting an idea into the mind of a CEO." />
 
 
-    <!-- Action buttons -->
-
+    <!-- Why this movie -->
     <TextView
-        android:id="@+id/textWhyThisFilm"
+        android:id="@+id/whyTitle"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginTop="16dp"
+        android:text="Why this movie?"
+        android:textStyle="bold"
+        android:textSize="16sp"
+        android:textColor="@android:color/white"
+        app:layout_constraintTop_toBottomOf="@id/movieOverview"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+    <ProgressBar
+        android:id="@+id/whyLoading"
+        style="?android:attr/progressBarStyleSmall"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:layout_constraintTop_toBottomOf="@id/whyTitle"
+        app:layout_constraintStart_toStartOf="parent"/>
+
+    <TextView
+        android:id="@+id/whyText"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="6dp"
         android:textColor="#E6FFFFFF"
         android:textSize="15sp"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="1.0"
+        app:layout_constraintTop_toBottomOf="@id/whyTitle"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/movieOverview"
-        tools:text="A thief who steals corporate secrets through dream-sharing technology is tasked with planting an idea into the mind of a CEO." />
+        app:layout_constraintEnd_toEndOf="parent"
+        tools:text="Picked for its clever heist setup, high rating and mind-bending sci-fi themes." />
+
 
     <LinearLayout
         android:id="@+id/actionsRow"
@@ -84,7 +106,7 @@
         android:orientation="horizontal"
         android:gravity="center"
         android:layout_marginTop="12dp"
-        app:layout_constraintTop_toBottomOf="@id/textWhyThisFilm"
+        app:layout_constraintTop_toBottomOf="@id/whyText"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent">
 

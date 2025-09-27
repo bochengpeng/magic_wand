@@ -32,9 +32,17 @@ android {
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
 
-        // Kotlin DSL version
-        val token = localProps.getProperty("TMDB_ACCESS_TOKEN") ?: ""
+        // Read values with sensible defaults
+        val token = localProps.getProperty("TMDB_ACCESS_TOKEN", "")
+        val aiKey = localProps.getProperty("AI_API_KEY", "")
+        val aiBase = localProps.getProperty("AI_BASE_URL", "https://api.openai.com/")
+        val aiModel = localProps.getProperty("AI_MODEL", "gpt-4o-mini")
+
+        // Expose to BuildConfig
         buildConfigField("String", "TMDB_ACCESS_TOKEN", "\"$token\"")
+        buildConfigField("String", "AI_API_KEY", "\"$aiKey\"")
+        buildConfigField("String", "AI_BASE_URL", "\"$aiBase\"")
+        buildConfigField("String", "AI_MODEL", "\"$aiModel\"")
     }
 
     buildTypes {
