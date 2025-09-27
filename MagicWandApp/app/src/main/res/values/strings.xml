@@ -1,0 +1,15 @@
+<resources>
+    <string name="app_name">Magical Wand</string>
+    <string name="back" />
+    <string name="info" />
+    <string name="search" />
+    <string name="shake" />
+    <string name="magical_wand">Magical Wand</string>
+    <string name="movie">Movie</string>
+    <string name="series">Series</string>
+    <string name="romantic">Romantic</string>
+    <string name="choose_movie_or_series_and_shake">Choose Movie Or Series And Shake</string>
+    <string name="get_your_movie_or_series_by_type_title_categories_years_etc">Get your movie or series by Type title, categories, years, etc</string>
+    <string name="shake_again">Shake Again</string>
+    <string name="clear">Clear</string>
+</resources>
