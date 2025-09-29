@@ -23,43 +23,22 @@ class GeneratorActivity : AppCompatActivity() {
     private lateinit var sensorManager: SensorManager
     private var accelSensor: Sensor? = null
 
-    // Easier to trigger: threshold 10f, faster sampling
-    private val shakeListener = ShakeListener(
-        onShake = {
-            lifecycleScope.launch {
-                try {
-                    val resp = ApiModule.tmdb.getPopularMovies()
-                    val movie = resp.results.randomOrNull() ?: return@launch
+    // Debounce/guard
+    private var isLaunching: Boolean = false
+    private var lastLaunchAt: Long = 0L
+    private val minLaunchGapMs: Long = 1500L
 
-                    val i = Intent(this@GeneratorActivity, ResultsActivity::class.java)
-                    i.putExtra(ResultsActivity.EXTRA_MOVIE, movie)
-                    startActivity(i)
-                } catch (e: Exception) {
-                    Log.e("TMDB", "Error fetching movies", e)
-                }
-            }
-        },
-        threshold = 10f,
-        cooldownMs = 800L
-    )
-
-    // Ask for POST_NOTIFICATIONS on Android 13+
-    private val requestNotifPermission = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { /* no-op: we’ll just skip if denied */ }
+    private lateinit var shakeListener: ShakeListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
-        // Sensors
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
-        // Notification channel
         NotificationHelper.ensureChannel(this)
 
-        // Request permission if needed
         if (Build.VERSION.SDK_INT >= 33 &&
             ActivityCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS)
             != PackageManager.PERMISSION_GRANTED
@@ -72,8 +51,18 @@ class GeneratorActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
+
+        // Allow launching again after returning from ResultsActivity
+        isLaunching = false
+
+        // Create the listener here (no self-reference in a property initializer)
+        shakeListener = ShakeListener(
+            onShake = { handleShake() },
+            threshold = 10f,
+            cooldownMs = 800L
+        )
+
         accelSensor?.let {
-            // More responsive than SENSOR_DELAY_UI
             sensorManager.registerListener(shakeListener, it, SensorManager.SENSOR_DELAY_GAME)
         } ?: run {
             Toast.makeText(this, "No accelerometer on this device.", Toast.LENGTH_LONG).show()
@@ -85,10 +74,43 @@ class GeneratorActivity : AppCompatActivity() {
         super.onPause()
     }
 
+    // ---- shake handling ----
+    private fun handleShake() {
+        val now = System.currentTimeMillis()
+        if (isLaunching || now - lastLaunchAt < minLaunchGapMs) return
+        isLaunching = true
+        lastLaunchAt = now
+
+        lifecycleScope.launch {
+            try {
+                val resp = ApiModule.tmdb.getPopularMovies()
+                val movie = resp.results.randomOrNull() ?: run {
+                    Toast.makeText(this@GeneratorActivity, "No movie found. Try again.", Toast.LENGTH_SHORT).show()
+                    isLaunching = false
+                    return@launch
+                }
+
+                startActivity(
+                    Intent(this@GeneratorActivity, ResultsActivity::class.java)
+                        .putExtra(ResultsActivity.EXTRA_MOVIE, movie)
+                )
+            } catch (e: Exception) {
+                Log.e("TMDB", "Error fetching movies", e)
+                Toast.makeText(this@GeneratorActivity, "Network error. Please try again.", Toast.LENGTH_SHORT).show()
+                isLaunching = false
+            }
+        }
+    }
+
+    // Ask for POST_NOTIFICATIONS on Android 13+
+    private val requestNotifPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { /* no-op */ }
+
     /** Simple shake detector */
     private class ShakeListener(
         private val onShake: () -> Unit,
-        private val threshold: Float = 12f,
+        private val threshold: Float = 11f,
         private val cooldownMs: Long = 1000L
     ) : SensorEventListener {
 
@@ -106,7 +128,7 @@ class GeneratorActivity : AppCompatActivity() {
             val now = System.currentTimeMillis()
             if (delta > threshold && now - lastTs > cooldownMs) {
                 lastTs = now
-                onShake()   // <-- calls lambda
+                onShake()
             }
         }
 

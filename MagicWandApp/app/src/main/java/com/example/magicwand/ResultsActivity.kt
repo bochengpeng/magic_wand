@@ -2,6 +2,7 @@ package com.example.magicwand
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.TextView
@@ -26,7 +27,6 @@ class ResultsActivity : AppCompatActivity() {
     private var explainJob: Job? = null
 
     companion object {
-        // Intent extra key
         const val EXTRA_MOVIE = "extra_movie"
 
         // simple in-memory cache: movieId -> explanation
@@ -64,6 +64,18 @@ class ResultsActivity : AppCompatActivity() {
         explainWhy(m)
     }
 
+    private fun ruleBasedWhy(m: Movie): String {
+        val r = (m.vote_average ?: 0.0)
+        val tags = buildList {
+            if (r >= 7.5) add("well-reviewed")
+            if ((m.overview ?: "").contains("love", true)) add("romantic")
+            if ((m.overview ?: "").contains("thrill|suspense|chase".toRegex(RegexOption.IGNORE_CASE))) add("fast-paced")
+            if ((m.overview ?: "").contains("family|kids".toRegex(RegexOption.IGNORE_CASE))) add("family-friendly")
+        }.takeIf { it.isNotEmpty() }?.joinToString(", ") ?: "audience-friendly"
+        return "Picked for its $tags vibe and engaging story. If you like ${m.title}, you’ll enjoy its tone and themes."
+    }
+
+
     private fun explainWhy(movie: Movie) {
         val loading = findViewById<ProgressBar>(R.id.whyLoading)
         val whyText = findViewById<TextView>(R.id.whyText)
@@ -79,15 +91,29 @@ class ResultsActivity : AppCompatActivity() {
         loading.visibility = View.VISIBLE
         whyText.text = ""
 
-        val prompt = buildString {
-            appendLine("Explain in 2–3 friendly sentences why this movie might be a good pick.")
-            appendLine("Focus on mood, themes, strengths, and who might enjoy it.")
-            appendLine("Keep it concise and positive.")
-            appendLine("Title: ${movie.title}")
-            appendLine("Overview: ${movie.overview.orEmpty().take(500)}")
-            appendLine("Release date: ${movie.release_date ?: "-"}")
-            appendLine("Rating: ${movie.vote_average ?: 0.0}")
+        Log.d("AI", "BASE=${BuildConfig.AI_BASE_URL} MODEL=${BuildConfig.AI_MODEL}")
+
+        // Insert the limiter check
+        val mustWait = AiRateLimiter.gate()
+        if (mustWait > 0) {
+            // Too soon since last attempt – fallback instead of hitting AI
+            whyText.text = ruleBasedWhy(movie)
+            loading.visibility = View.GONE
+            return
         }
+
+        val prompt = """
+        Explain in 2 short sentences why someone might enjoy this movie right now.
+        Be specific, positive, no spoilers, using human language, not AI vibe.
+        
+        Title: ${movie.title}
+        Overview: ${movie.overview.orEmpty().take(280)}
+        Year: ${movie.release_date?.take(4) ?: "-"}
+        Rating: ${"%.1f".format(movie.vote_average ?: 0.0)}
+        """.trimIndent()
+
+        android.util.Log.d("AI", "gate wait ms = $mustWait")
+
 
         explainJob = lifecycleScope.launch(Dispatchers.Main) {
             try {
@@ -112,7 +138,7 @@ class ResultsActivity : AppCompatActivity() {
     private suspend fun chatWithRetry(prompt: String): String {
         var attempt = 0
         var backoffMs = 1200L
-        val maxAttempts = 3
+        val maxAttempts = 4
 
         while (true) {
             attempt++
@@ -141,6 +167,11 @@ class ResultsActivity : AppCompatActivity() {
                     backoffMs = min(backoffMs * 2, 8000L)
                     continue
                 }
+
+                // 🔍 log full error response for debugging
+                val body = e.response()?.errorBody()?.string()
+                android.util.Log.e("AI", "HTTP ${e.code()} body=$body", e)
+
                 throw e
             }
         }

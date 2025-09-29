@@ -26,14 +26,14 @@ interface TmdbApi {
     @GET("movie/popular")
     suspend fun getPopularMovies(
         @Query("page") page: Int = 1,
-        @Query("language") language: String = "en-US"
+        @Query("language") language: String = "en-UK"
     ): DiscoverResp
 
     @GET("search/movie")
     suspend fun searchMovies(
         @Query("query") query:String,
         @Query("page") page:Int = 1,
-        @Query("language") language:String = "en-US",
+        @Query("language") language:String = "en-UK",
         @Query("include_adult") includeAdult:Boolean = true
     ): DiscoverResp
 }

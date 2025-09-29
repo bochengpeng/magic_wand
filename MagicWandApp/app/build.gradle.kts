@@ -79,4 +79,6 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-moshi:2.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.8.1")
     implementation("io.coil-kt:coil:2.6.0")
+    // add this so reflection works reliably
+    implementation(kotlin("reflect"))
 }

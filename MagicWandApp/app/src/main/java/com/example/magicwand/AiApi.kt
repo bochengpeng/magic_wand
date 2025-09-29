@@ -16,6 +16,6 @@ data class AiResponse(val choices: List<AiChoice>)
 
 interface AiApi {
     @Headers("Content-Type: application/json")
-    @POST("v1/chat/completions")
+    @POST("chat/completions")
     suspend fun getExplanation(@Body req: AiRequest): AiResponse
 }
