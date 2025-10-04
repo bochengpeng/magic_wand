@@ -12,4 +12,19 @@
     <string name="get_your_movie_or_series_by_type_title_categories_years_etc">Get your movie or series by Type title, categories, years, etc</string>
     <string name="shake_again">Shake Again</string>
     <string name="clear">Clear</string>
+    <string name="pick_genre">Pick a genre</string>
+    <string name="select_genre">Select genre</string>
+    <string-array name="genres_display">
+        <item>Any</item>
+        <item>Action</item>
+        <item>Comedy</item>
+        <item>Romance</item>
+        <item>Horror</item>
+        <item>Drama</item>
+        <item>Thriller</item>
+        <item>Sci-Fi</item>
+        <item>Animation</item>
+        <item>Family</item>
+    </string-array>
+
 </resources>

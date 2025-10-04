@@ -10,6 +10,7 @@ import android.hardware.SensorManager
 import android.os.Build
 import android.os.Bundle
 import android.util.Log
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -34,6 +35,11 @@ class GeneratorActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_home)
 
+        val genreDropdown = findViewById<com.google.android.material.textfield.MaterialAutoCompleteTextView>(R.id.genreDropdown)
+        val genres = resources.getStringArray(R.array.genres_display)
+        val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, genres)
+        genreDropdown.setAdapter(adapter)
+
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
 
@@ -57,7 +63,10 @@ class GeneratorActivity : AppCompatActivity() {
 
         // Create the listener here (no self-reference in a property initializer)
         shakeListener = ShakeListener(
-            onShake = { handleShake() },
+            onShake = {
+                handleShake()
+                Haptics.shakePulse(this@GeneratorActivity)
+                      },
             threshold = 10f,
             cooldownMs = 800L
         )
@@ -83,7 +92,8 @@ class GeneratorActivity : AppCompatActivity() {
 
         lifecycleScope.launch {
             try {
-                val resp = ApiModule.tmdb.getPopularMovies()
+                val randomPage = (1..100).random()
+                val resp = ApiModule.tmdb.getPopularMovies(randomPage)
                 val movie = resp.results.randomOrNull() ?: run {
                     Toast.makeText(this@GeneratorActivity, "No movie found. Try again.", Toast.LENGTH_SHORT).show()
                     isLaunching = false

@@ -18,7 +18,7 @@ object ApiModule {
         })
         .build()
 
-    // ✅ Create Moshi with the Kotlin adapter
+    // Create Moshi with the Kotlin adapter
     private val moshi = Moshi.Builder()
         .add(KotlinJsonAdapterFactory())
         .build()
