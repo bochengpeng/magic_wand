@@ -16,6 +16,8 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.lifecycle.lifecycleScope
+import com.google.android.material.chip.Chip
+import com.google.android.material.chip.ChipGroup
 import kotlinx.coroutines.launch
 import kotlin.math.sqrt
 
@@ -29,6 +31,8 @@ class GeneratorActivity : AppCompatActivity() {
     private var lastLaunchAt: Long = 0L
     private val minLaunchGapMs: Long = 1500L
 
+    private var isMovieMode: Boolean = true
+
     private lateinit var shakeListener: ShakeListener
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -39,6 +43,14 @@ class GeneratorActivity : AppCompatActivity() {
         val genres = resources.getStringArray(R.array.genres_display)
         val adapter = ArrayAdapter(this, android.R.layout.simple_list_item_1, genres)
         genreDropdown.setAdapter(adapter)
+
+        val chipGroup = findViewById<ChipGroup>(R.id.toggleGroup)
+        val movie = findViewById<Chip>(R.id.chipMovie)
+        isMovieMode = movie.isChecked
+
+        chipGroup.setOnCheckedStateChangeListener { _, checkedIds ->
+            isMovieMode = checkedIds.contains(R.id.chipMovie)
+        }
 
         sensorManager = getSystemService(SENSOR_SERVICE) as SensorManager
         accelSensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
@@ -64,9 +76,11 @@ class GeneratorActivity : AppCompatActivity() {
         // Create the listener here (no self-reference in a property initializer)
         shakeListener = ShakeListener(
             onShake = {
-                handleShake()
-                Haptics.shakePulse(this@GeneratorActivity)
-                      },
+                if (isMovieMode) {
+                    handleShake()
+                    Haptics.shakePulse(this@GeneratorActivity)
+                }
+            },
             threshold = 10f,
             cooldownMs = 800L
         )
